@@ -105,6 +105,11 @@ const NV={plan:'برنامه ماهانه',exb:'بانک حرکات',fdb:'بان
 let PV='coach',AIS=null,MB={s:null,d:'شنبه'},WB={s:null,d:'شنبه'},CA=null,CB=null;
 const MFm=MF.slice(0,6);
 const fAll=()=>{const o={};FB.forEach(([g,d,l])=>l.forEach(([n,k,p,c,f,t])=>o[n]={n,k,p,c,f,g,t,vit:VT[n]}));(S.cf||[]).forEach(x=>o[x.n]={...x,g:x.g||'غذاهای من'});return o};
+function modal(h){const d=document.createElement('div');d.id='md';d.style.cssText='position:fixed;inset:0;background:#000a;z-index:20;display:grid;place-items:center;padding:20px';d.innerHTML=`<div class="card" style="max-width:480px;width:100%;max-height:80vh;overflow:auto;background:var(--c)">${h}<button class="b" data-a="mdx">بستن</button></div>`;d.addEventListener('click',e=>{if(e.target==d)d.remove()});document.body.append(d)}
+const supCard=(x,i)=>`<button class="row" data-a="supo" data-i="${i}" style="margin:6px 0"><b>${esc(x.n)}</b><div class="m" style="font-size:13px">زمان: ${esc(x.t)||'—'} · مقدار: ${esc(x.q)||'—'}</div>${x.h?`<div style="font-size:13px">${esc(x.h)}</div>`:''}<div class="m" style="font-size:12px">برای دیدن توضیحات کامل لمس کن ›</div></button>`;
+const mealExtra=(s,C,m)=>{const sp=s.sp||{},it=sp.items||[],supHtml=(sp.on||C)&&it.length?`<h3>💊 مکمل مصرفی</h3>${it.map(supCard).join('')}`:'';
+const ex=C?[['alg','غذاهای حساسیت‌زا / ممنوع'],['wat','آب مصرفی روزانه'],['note','توصیه مربی']].map(([k,t])=>`<label>${t}<textarea data-c="ml" data-k="${k}">${esc(m[k])}</textarea></label>`).join(''):[['wat','💧 آب مصرفی روزانه'],['alg','⚠️ غذاهای حساسیت‌زا / ممنوع'],['note','📝 توصیه مربی']].filter(([k])=>m[k]).map(([k,t])=>`<div class="card"><b>${t}</b><div style="white-space:pre-wrap">${esc(m[k])}</div></div>`).join('');
+return supHtml+ex};
 const hid=(k,n)=>(S[k]||[]).includes(n);
 const DPw=(s,w)=>{w=w||1;if(w==1)return s.dp=s.dp||{};s.dpw=s.dpw||{};return s.dpw[w]=s.dpw[w]||{}};
 const DPsrc=(s,w)=>{w=w||1;return w>1?((s.dpw||{})[w]||{}):(s.dp||{})};
@@ -159,7 +164,7 @@ async function push(){try{
    const l=JSON.stringify(s.logs);if(l!=L.l){const {error}=await SB.from('plans').upsert({student_id:id,month:'logs',kind:'m',data:{logs:s.logs},updated_at:new Date().toISOString()});if(error)throw error;L.l=l}}}
  if(S.coach){const t=JSON.stringify(sset());if(t!=LP.set){const {error}=await SB.from('settings').upsert({key:'coach',value:sset()});if(error)throw error;LP.set=t}}
 }catch(e){toast('ذخیره روی سرور ناموفق: '+(e.message||''))}}
-const save=()=>{if(S.cur)DIRTY.add(S.cur);clearTimeout(pt);pt=setTimeout(push,500);return true};
+const save=()=>{[S.cur,(typeof MB!=='undefined'&&MB)?MB.s:null,(typeof WB!=='undefined'&&WB)?WB.s:null].forEach(id=>{if(id)DIRTY.add(id)});clearTimeout(pt);pt=setTimeout(push,500);return true};
 let V='home',T='w',WK=1,MO=new Date().toISOString().slice(0,7),PH={};
 const $=s=>document.querySelector(s),fa=n=>String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -234,7 +239,7 @@ return`${bk('dash')}<h2>روند پیشرفت</h2>
 <h3>نمودار سایزها</h3><select data-c="sz">${M.map(([k,t])=>`<option value="${k}" ${k==sz?'selected':''}>${t}</option>`).join('')}</select><div class="card">${chart(L,sz)}</div>
 <h3>مقایسه عکس قبل و بعد</h3>${fl.length>1?`<div class="cmp"><img src="${fl[0].ph.f}" alt="قبل"><img id="cb" src="${fl[fl.length-1].ph.f}" alt="بعد" style="clip-path:inset(0 50% 0 0)"><span style="right:8px">قبل</span><span style="left:8px">بعد</span><input type="range" min="0" max="100" value="50" data-c="cmp" aria-label="مقایسه"></div>`:'<p class="m">برای مقایسه، دست‌کم دو ثبت با عکس روبه‌رو لازم است.</p>'}`},
 plan:()=>{const s=cur(),C=S.coach,tabs=`<div class="chips"><button class="${T=='w'?'on':''}" data-a="tab" data-t="w">🏋️ برنامه ورزشی</button><button class="${T=='m'?'on':''}" data-a="tab" data-t="m">🥗 برنامه غذایی</button></div><label>ماه برنامه<input type="month" value="${MO}" data-c="mo"></label>`;
-if(T=='m'){const m=(s.ml||{})[MO]||{};return`${bk('log')}<h2>برنامه غذایی</h2>${tabs}${C?'<button class="b g" data-a="v" data-v="fdb">🍗 بانک غذایی</button>':''}${mealTable(s)}${MF.map(([k,t])=>`<label>${t}${C?`<textarea data-c="ml" data-k="${k}">${esc(m[k])}</textarea>`:`<div class="card" style="white-space:pre-wrap;margin:3px 0;color:var(--t)">${esc(m[k])||'—'}</div>`}</label>`).join('')}`}
+if(T=='m'){const m=(s.ml||{})[MO]||{};return`${bk('log')}<h2>برنامه غذایی</h2>${tabs}${C?'<button class="b g" data-a="v" data-v="fdb">🍗 بانک غذایی</button>':''}${mealTable(s)}${mealExtra(s,C,m)}`}
 const days=s.p.days&&s.p.days.length?s.p.days:D,wk=((s.pl||{})[MO]||{})[WK]||{};
 return`${bk('log')}<h2>برنامه ورزشی</h2>${tabs}${phb(s,C)}${C?'<button class="b g" data-a="v" data-v="exb">🏋️ بانک حرکات</button>':''}<div class="chips">${[1,2,3,4].map(n=>`<button class="${n==WK?'on':''}" data-a="wk" data-n="${n}">هفته ${fa(n)}</button>`).join('')}</div>
 <div class="warn">⚠️ سطح: ${esc(s.p.lvl)||'—'}<br>آسیب‌ها: ${esc(s.p.inj)||'ندارد'}<br>سابقه جراحی: ${esc(s.p.sur)||'ندارد'}</div>
@@ -253,7 +258,7 @@ cacc:()=>`${bk(S.coach?'coach':'dash')}<h2>حساب کاربری</h2><div class=
 pk:()=>{if(!PK)return views[PKR]();const isF=PK.k=='f',gs=isF?[...FB.map(x=>x[0]),'غذاهای من']:BA.map(x=>x[0]),top=`<button class="bk" data-a="pkx">‹ بازگشت به برنامه</button><h2>${isF?'🍗 بانک غذایی':'🏋️ بانک حرکات'}</h2>`;
 if(!PK.cat)return`${top}<p class="m">${isF?'یک دسته غذایی را انتخاب کن':'یک عضله یا دسته تمرین را انتخاب کن'}</p><div class="grid">${gs.map(g=>`<button class="tile" data-a="pkc" data-g="${esc(g)}" style="font-size:15px;padding:16px 6px">${g}<b class="m">${fa(pkItems(g).length)} مورد</b></button>`).join('')}</div>`;
 return`${top}<button class="bk" data-a="pkb">‹ دسته‌ها</button><h3>${PK.cat}</h3><input data-c="pkq" placeholder="جستجو در این دسته">${pkItems(PK.cat).map(pkRow).join('')||'<p class="m">موردی نیست.</p>'}`},
-sup:()=>{const s=cur(),it=(s.sp&&s.sp.items)||[];return`${bk('dash')}<h2>💊 معرفی مکمل‌ها</h2>${it.map(x=>{const l=(S.sl||[]).find(y=>y.n==x.n);return`<div class="card"><b>${esc(x.n)}</b><div class="chips"><span>زمان: ${esc(x.t)||'—'}</span><span>مقدار: ${esc(x.q)||'—'}</span></div>${x.h?`<div>${esc(x.h)}</div>`:''}${l&&l.d?`<div class="m" style="margin-top:6px">${esc(l.d)}</div>`:''}</div>`}).join('')||'<p class="m">مربی هنوز مکملی برایت ثبت نکرده است.</p>'}<div class="m" style="font-size:12px">مصرف مکمل را با نظر مربی و در صورت بیماری یا دارو، با پزشک هماهنگ کن.</div>`},
+sup:()=>{const s=cur(),it=(s.sp&&s.sp.items)||[];return`${bk('dash')}<h2>💊 معرفی مکمل‌ها</h2>${it.map(supCard).join('')||'<p class="m">مربی هنوز مکملی برایت ثبت نکرده است.</p>'}<div class="m" style="font-size:12px;margin-top:10px">مصرف مکمل را با نظر مربی و در صورت بیماری یا مصرف دارو، با پزشک هماهنگ کن.</div>`},
 slb:()=>`${bk('coach')}<h2>💊 فهرست مکمل‌ها</h2><div class="card m" style="font-size:13px">اینجا مکمل‌ها و توضیحشان را ثبت کن؛ هنگام نوشتن برنامه غذایی هر شاگرد، از همین فهرست انتخاب می‌کنی.</div><div class="add"><input id="sln" placeholder="نام مکمل"><textarea id="sld" placeholder="توضیحات (کاربرد، نکات مصرف، هشدارها)"></textarea><button class="b g" data-a="sladd">+ افزودن به فهرست</button></div>${(S.sl||[]).map((x,i)=>`<div class="ex"><button class="x" data-a="sldel" data-i="${i}">حذف</button><b>${esc(x.n)}</b><div class="m">${esc(x.d)}</div></div>`).join('')||'<p class="m">فهرست خالی است.</p>'}`,
 mgv:()=>`${bk('coach')}<h2>✨ جمله‌های انگیزشی</h2><div class="card m" style="font-size:13px">هر جمله در یک خط بنویس. هر روز یکی از آن‌ها برای شاگردها نمایش داده می‌شود.</div><textarea data-c="mgt" style="min-height:260px">${esc(mgs().join('\n'))}</textarea>`
 };
@@ -316,6 +321,8 @@ out:async()=>{await SB.auth.signOut();S={st:[],cur:null,coach:false};ME=null;go(
 spw:async t=>{const s=S.st.find(x=>x.id==t.dataset.i);if(!s||!s.p.em)return toast('ایمیلی ثبت نشده');const {error}=await SB.auth.resetPasswordForEmail(s.p.em,{redirectTo:location.origin+location.pathname});toast(error?error.message:'لینک تغییر رمز برای شاگرد ارسال شد ✓')},
 sdel:async t=>{const id=t.dataset.i;if(window.DEL==id){const {error}=await SB.rpc('delete_student',{sid:id});window.DEL=null;if(error)return toast(error.message);S.st=S.st.filter(x=>x.id!=id);toast('شاگرد حذف شد')}else{window.DEL=id;toast('برای حذف نهایی دوباره بزن')}rd()},
 shr:()=>{const u=location.origin+location.pathname;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('لینک کپی شد؛ برای شاگرد بفرست ✓')).catch(()=>toast(u))},
+supo:t=>{const s=cur(),x=((s.sp||{}).items||[])[+t.dataset.i];if(!x)return;const l=(S.sl||[]).find(y=>y.n==x.n);modal(`<h2>${esc(x.n)}</h2><div class="chips"><span>زمان: ${esc(x.t)||'—'}</span><span>مقدار: ${esc(x.q)||'—'}</span></div>${x.h?`<h3>نحوه مصرف</h3><div style="white-space:pre-wrap">${esc(x.h)}</div>`:''}${l&&l.d?`<h3>توضیحات کامل</h3><div style="white-space:pre-wrap">${esc(l.d)}</div>`:'<p class="m">توضیح بیشتری ثبت نشده است.</p>'}`)},
+mdx:()=>{const e=document.getElementById('md');if(e)e.remove()},
 pkf:t=>{PK={k:'f',m:t.dataset.m,cat:null,sel:null};PKR='mb';go('pk')},
 pke:t=>{PK={k:'e',d:t.dataset.d,cat:null,sel:null};PKR='wb';go('pk')},
 pkx:()=>{PK=null;go(PKR)},pkc:t=>{PK.cat=t.dataset.g;PK.sel=null;go('pk')},pkb:()=>{PK.cat=null;PK.sel=null;go('pk')},pks:t=>{PK.sel=t.dataset.n;rd()},
